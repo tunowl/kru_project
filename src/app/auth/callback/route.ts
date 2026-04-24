@@ -8,13 +8,26 @@ export async function GET(request: Request) {
 
     if (code) {
         const supabase = await createClient()
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            // Login successful, DB accepted the email
-            return NextResponse.redirect(`${origin}${next}`)
+            const email = data.user?.email || "";
+            const isAdmin = email === "tunowl2head@gmail.com";
+            const isTeacher = email.endsWith("@nssc.ac.th");
+            const isStudent = email.endsWith("@student.nssc.ac.th");
+
+            if (!isAdmin && !isTeacher && !isStudent) {
+                await supabase.auth.signOut();
+                return NextResponse.redirect(`${origin}/login?error=Unauthorized`);
+            }
+
+            let defaultNext = '/student';
+            if (isAdmin) defaultNext = '/admin';
+            else if (isTeacher) defaultNext = '/teacher';
+
+            return NextResponse.redirect(`${origin}${searchParams.get('next') || defaultNext}`);
         } else {
-            // The DB trigger rejected the email, causing exchangeCodeForSession to fail
+            // Some other error occurred during exchange
             console.error("Auth Callback Error:", error.message);
             return NextResponse.redirect(`${origin}/login?error=Unauthorized`)
         }

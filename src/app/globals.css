@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* YOUR EXACT CUSTOM DESIGN SYSTEM */
 :root {
